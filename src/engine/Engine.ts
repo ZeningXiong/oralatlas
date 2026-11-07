@@ -30,7 +30,7 @@ import { ALL_FDI, formatTooth } from "../anatomy/notation";
 import { SURFACE_FEATURES } from "../content/toothParts";
 import { type AppState, actions, useStore, setState, getState } from "../state/store";
 import { createCavityMesh, createTissueMaterial, sharedJaw, sharedLesion, uniformsOf } from "./materials";
-import type { LesionFrame, LesionParams } from "../disease/caries";
+import type { LesionFrame, LesionParams, LesionSurface } from "../disease/caries";
 import { JawWeightField, weightsFromVertexColor, worldPoints } from "./weights";
 import SmoothWorker from "./smooth.worker?worker";
 
@@ -1106,6 +1106,8 @@ export class Engine {
 
   private lesion: {
     fdi: number;
+    /** 病损所在牙面：O 咬合面 / M 近中 / D 远中 / B 颊（唇）/ L 舌（腭） */
+    surfaceKey: LesionSurface;
     frame: LesionFrame;
     surface: THREE.Vector3;
     pulpCenter: THREE.Vector3;
@@ -1122,17 +1124,34 @@ export class Engine {
    * 开始病变演示：加载该牙内部结构，沿病损轴实测釉质厚度与到髓室顶的距离，
    * 返回病损坐标系与“起点 → 髓腔 → 最远根尖”的路径长度。
    */
-  async startLesion(fdi: number): Promise<{ frame: LesionFrame; apexDist: number }> {
+  async startLesion(fdi: number, surfaceKey: LesionSurface = "O"): Promise<{ frame: LesionFrame; apexDist: number }> {
     this.stopLesion();
     await this.ensureTooth(fdi);
     const t = this.manifest.teeth[String(fdi)];
     this.root.updateMatrixWorld(true);
     const axis = new THREE.Vector3(...t.frame.axis).normalize();
-    const dir = axis.clone().negate();
-    const fossa = t.surfaceFeatures?.find((f) => f.key === "central-fossa");
-    const start = fossa ? new THREE.Vector3(...fossa.anchor) : new THREE.Vector3(...t.frame.origin).addScaledVector(axis, 0.6);
+    const mesial = new THREE.Vector3(...t.frame.mesial).normalize();
+    const buccal = new THREE.Vector3(...t.frame.buccal).normalize();
+    const origin = new THREE.Vector3(...t.frame.origin);
+    // 牙冠高度范围（沿牙长轴）：颈缘线 → 最高的牙尖/切缘
+    const h = (p: THREE.Vector3) => p.clone().sub(origin).dot(axis);
+    const cerv = t.landmarks["cervical-line"] ? h(new THREE.Vector3(...t.landmarks["cervical-line"])) : 0;
+    const top = Math.max(cerv + 0.5, ...(t.surfaceFeatures ?? []).map((f) => h(new THREE.Vector3(...f.anchor))));
+    // 各牙面的好发部位（示意）：咬合面 → 中央窝；邻面 → 接触点下方（冠中 1/3 偏咬合）；颊舌面 → 近颈 1/3
+    let dir: THREE.Vector3;
+    let start: THREE.Vector3;
+    if (surfaceKey === "O") {
+      dir = axis.clone().negate();
+      const fossa = t.surfaceFeatures?.find((f) => f.key === "central-fossa");
+      start = fossa ? new THREE.Vector3(...fossa.anchor) : origin.clone().addScaledVector(axis, top);
+    } else {
+      const out = surfaceKey === "M" ? mesial : surfaceKey === "D" ? mesial.clone().negate() : surfaceKey === "B" ? buccal : buccal.clone().negate();
+      dir = out.clone().negate();
+      const frac = surfaceKey === "M" || surfaceKey === "D" ? 0.6 : 0.28;
+      start = origin.clone().addScaledVector(axis, cerv + (top - cerv) * frac);
+    }
     const mesh = (k: string) => this.entries.get(`${k}-${fdi}`)?.mesh;
-    const ray = new THREE.Raycaster(start.clone().addScaledVector(axis, 1.2), dir, 0, 4);
+    const ray = new THREE.Raycaster(start.clone().addScaledVector(dir, -1.2), dir, 0, 4);
     const firstHit = (m?: THREE.Mesh) => (m ? ray.intersectObject(m, false)[0]?.point ?? null : null);
     const surface = firstHit(mesh("enamel")) ?? start;
     const dentinTop = firstHit(mesh("dentin-coronal"));
@@ -1193,7 +1212,7 @@ export class Engine {
     this.scene.add(cavity);
 
     const frame: LesionFrame = { center: surface.toArray() as [number, number, number], dir: dir.toArray() as [number, number, number], enamel, toPulp };
-    this.lesion = { fdi, frame, surface, pulpCenter, apices, spheres, cavity, points, seeds, params: null, showBacteria: true };
+    this.lesion = { fdi, surfaceKey, frame, surface, pulpCenter, apices, spheres, cavity, points, seeds, params: null, showBacteria: true };
     // 病损只有 1–3 mm，允许镜头比平时更近
     this.controls.minDistance = 1.1;
     sharedLesion.uLesionC.value.copy(surface);
@@ -1247,18 +1266,42 @@ export class Engine {
     const crown = focus === "crown";
     const target = crown ? L.surface.clone().lerp(L.pulpCenter, 0.42) : L.surface.clone().lerp(apex, 0.4);
     const side = getState().section.enabled ? this.clipPlane.normal.clone().negate() : new THREE.Vector3(...t.frame.buccal);
-    const dir = side.multiplyScalar(crown ? 0.72 : 0.93).addScaledVector(axis, crown ? 0.75 : 0.36).normalize();
+    // 咬合面病损从咬合方向俯视；邻面/颊舌面病损从病损外侧斜看
+    const up = L.surfaceKey === "O" ? axis : new THREE.Vector3(...L.frame.dir).negate().multiplyScalar(0.85).addScaledVector(axis, 0.3).normalize();
+    const dir = side.multiplyScalar(crown ? 0.72 : 0.93).addScaledVector(up, crown ? 0.75 : 0.36).normalize();
     const dist = (len * (crown ? 0.31 : 0.78)) / Math.tan((FOV * Math.PI) / 360);
     this.flyTo(target.clone().addScaledVector(dir, dist * Math.max(1, 0.95 / this.visibleAspect)), target, 1);
   }
 
   /** 让剖面（单牙解剖的近远中向剖面）正好穿过病损中心 */
   lesionSectionOffset(): number {
+    return this.lesionSection().offset;
+  }
+
+  /**
+   * 穿过病损中心、且包含病损轴的剖面：
+   * 咬合面与邻面病损用近远中向剖面（sagittal），颊舌面病损用颊舌向剖面（coronal）。
+   */
+  lesionSection(): { axis: "sagittal" | "coronal"; offset: number } {
     const L = this.lesion;
-    if (!L) return 0;
+    if (!L) return { axis: "sagittal", offset: 0 };
     const t = this.manifest.teeth[String(L.fdi)];
-    const buccal = new THREE.Vector3(...t.frame.buccal);
-    return THREE.MathUtils.clamp(L.surface.clone().sub(this.toothCenter(L.fdi)).dot(buccal) / 0.55, -1, 1);
+    const coronal = L.surfaceKey === "B" || L.surfaceKey === "L";
+    const normal = new THREE.Vector3(...(coronal ? t.frame.mesial : t.frame.buccal));
+    const offset = THREE.MathUtils.clamp(L.surface.clone().sub(this.toothCenter(L.fdi)).dot(normal) / 0.55, -1, 1);
+    return { axis: coronal ? "coronal" : "sagittal", offset };
+  }
+
+  /**
+   * 病历：总览中按 ICDAS 最高分给牙齿着色。传入 fdi → RGB（0–1），null 清除全部。
+   */
+  setToothMarks(marks: Map<number, [number, number, number]> | null) {
+    for (const e of this.entries.values()) {
+      if (e.fdi === null || !e.key.startsWith("tooth-")) continue;
+      const c = marks?.get(e.fdi);
+      uniformsOf(e.mat).uTint.value.set(c?.[0] ?? 0, c?.[1] ?? 0, c?.[2] ?? 0, c ? 0.62 : 0);
+    }
+    this.dirty = true;
   }
 
   stopLesion() {

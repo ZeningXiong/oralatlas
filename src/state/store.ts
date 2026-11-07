@@ -4,7 +4,7 @@ import type { CategoryId, SceneSpec, ViewPreset } from "../content/types";
 import type { Numbering } from "../anatomy/notation";
 
 export type Vis = "on" | "ghost" | "off";
-export type Mode = "explore" | "learn" | "disease" | "quiz" | "glossary";
+export type Mode = "explore" | "learn" | "disease" | "chart" | "quiz" | "glossary";
 export type ExplorePanel = "layers" | "odontogram" | "tree";
 export type SectionAxis = "sagittal" | "coronal" | "axial";
 

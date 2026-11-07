@@ -19,6 +19,7 @@ import { LessonPanel } from "../ui/learn/LessonPanel";
 import { QuizPanel } from "../ui/quiz/QuizPanel";
 import { GlossaryPanel } from "../ui/GlossaryPanel";
 import { DiseasePanel } from "../ui/disease/DiseasePanel";
+import { ChartPanel } from "../ui/chart/ChartPanel";
 
 const VIEW_KEYS: ViewPreset[] = ["three-quarter", "front", "right", "left", "top", "bottom", "occlusal-upper", "occlusal-lower"];
 
@@ -79,6 +80,7 @@ function useHashRouting(ready: boolean) {
         setState({ mode: "explore", welcomeOpen: false });
         actions.reveal(id, categoryOf(id));
       } else if (kind === "lesson" && id) setState({ mode: "learn", lessonId: id, lessonSection: 0, welcomeOpen: false });
+      else if (kind === "chart") setState({ mode: "chart", welcomeOpen: false });
     };
     apply();
     window.addEventListener("hashchange", apply);
@@ -87,6 +89,7 @@ function useHashRouting(ready: boolean) {
       if (s.selected === p.selected && s.dissectFdi === p.dissectFdi && s.lessonId === p.lessonId && s.mode === p.mode) return;
       let hash = "";
       if (s.mode === "learn" && s.lessonId) hash = `#/lesson/${s.lessonId}`;
+      else if (s.mode === "chart") hash = "#/chart";
       else if (s.mode === "explore" && s.dissectFdi !== null) hash = `#/dissect/${s.dissectFdi}`;
       else if (s.mode === "explore" && s.selected) hash = /^tooth-\d\d$/.test(s.selected) ? `#/tooth/${s.selected.slice(6)}` : `#/s/${s.selected}`;
       if (hash !== location.hash) history.replaceState(null, "", hash || location.pathname + location.search);
@@ -110,7 +113,7 @@ function Sidebar() {
   const collapsed = useStore((s) => s.sidebarCollapsed);
   const setCollapsed = (v: boolean) => setState({ sidebarCollapsed: v });
   const tt = useT();
-  const wide = mode === "learn" || mode === "glossary" || mode === "disease";
+  const wide = mode === "learn" || mode === "glossary" || mode === "disease" || mode === "chart";
   useEffect(() => setState({ sidebarCollapsed: window.innerWidth < 900 && mode === "explore" }), [mode]);
   return (
     <>
@@ -133,6 +136,7 @@ function Sidebar() {
         {mode === "quiz" && <QuizPanel />}
         {mode === "glossary" && <GlossaryPanel />}
         {mode === "disease" && <DiseasePanel />}
+        {mode === "chart" && <ChartPanel />}
       </aside>
       <button className="btn mobile-sheet-btn" onClick={() => setCollapsed(!collapsed)}>
         {collapsed ? tt("打开面板", "Open panel") : tt("收起面板", "Hide panel")}
@@ -199,7 +203,7 @@ export function App() {
   const theme = useStore((s) => s.theme);
   const ready = useStore((s) => s.ready);
   const mode = useStore((s) => s.mode);
-  const hasDetail = useStore((s) => s.mode !== "disease" && (s.selected !== null || s.dissectFdi !== null));
+  const hasDetail = useStore((s) => s.mode !== "disease" && s.mode !== "chart" && (s.selected !== null || s.dissectFdi !== null));
   const collapsed = useStore((s) => s.sidebarCollapsed);
   useKeyboard();
   useHashRouting(ready);
@@ -219,7 +223,7 @@ export function App() {
         engine.setInsets({ left: 0, right: 0, top: 0, bottom: bottom ? bottom + 64 : 0 });
       } else {
         const narrow = window.innerWidth < 1180;
-        const sideW = (mode === "learn" || mode === "glossary" || mode === "disease") ? 434 : narrow ? 330 : 358;
+        const sideW = (mode === "learn" || mode === "glossary" || mode === "disease" || mode === "chart") ? 434 : narrow ? 330 : 358;
         engine.setInsets({ left: collapsed ? 0 : sideW, right: hasDetail ? (narrow ? 364 : 406) : 0, top: 0, bottom: 64 });
       }
     };
@@ -241,17 +245,17 @@ export function App() {
       <div className="app">
         <TopBar />
         <main
-          className={`main ${hasDetail && ready ? "has-detail" : ""} ${mode === "learn" || mode === "glossary" || mode === "disease" ? "sidebar-wide" : ""} ${collapsed ? "sidebar-closed" : ""}`}
+          className={`main ${hasDetail && ready ? "has-detail" : ""} ${mode === "learn" || mode === "glossary" || mode === "disease" || mode === "chart" ? "sidebar-wide" : ""} ${collapsed ? "sidebar-closed" : ""}`}
         >
           <div className="stage" ref={stageRef} />
           <div id="stage-overlay" />
           {ready && (
             <>
               <Sidebar />
-              {mode !== "disease" && <DetailPanel />}
-              {mode !== "disease" && <DissectBar />}
+              {mode !== "disease" && mode !== "chart" && <DetailPanel />}
+              {mode !== "disease" && mode !== "chart" && <DissectBar />}
               <StageChips />
-              {mode !== "disease" && <Dock />}
+              {mode !== "disease" && mode !== "chart" && <Dock />}
               <TeethToast />
             </>
           )}

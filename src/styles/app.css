@@ -680,3 +680,87 @@ mark { background: color-mix(in srgb, var(--warn) 25%, transparent); color: inhe
 /* 顶栏在英文下更拥挤：不换行，必要时省略 */
 .ai-chip, .brand-sub, .modes button { white-space: nowrap; }
 .search-trigger span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+
+/* ------------------------------------------------------------- 病历 */
+.chart-records { display: flex; gap: 6px; margin-top: 8px; }
+.chart-records select { flex: 1; min-width: 0; }
+.chart-saved { font-size: 11.5px; margin-top: 6px; }
+.chart-msg { color: var(--accent); font-weight: 600; }
+.chart-body { padding: 4px 16px 22px; display: grid; gap: 12px; align-content: start; }
+.chart-section { border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; background: var(--panel-solid); }
+.chart-section > summary { cursor: pointer; font-weight: 650; font-size: 13.5px; }
+.chart-h { display: flex; align-items: baseline; gap: 8px; font-weight: 650; font-size: 13.5px; margin-bottom: 8px; }
+.chart-h .muted { font-weight: 400; font-size: 11.5px; }
+.chart-form { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+.chart-form label { display: grid; gap: 3px; font-size: 11.5px; color: var(--muted); font-weight: 600; }
+.chart-form label.wide { grid-column: 1 / -1; }
+.chart-form .input { height: 32px; font-size: 13px; }
+.chart-form textarea.input { height: auto; padding-top: 6px; resize: vertical; }
+.chart-privacy { font-size: 11.5px; line-height: 1.5; margin-top: 8px; }
+.chart-viewing { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 10px; background: var(--accent-soft); font-size: 12.5px; }
+.chart-viewing span { flex: 1; }
+.odo { position: relative; display: grid; gap: 6px; justify-content: center; }
+.odo-side { display: flex; justify-content: space-between; font-size: 10.5px; color: var(--muted); font-weight: 700; }
+.odo-row { display: flex; gap: 1px; }
+.odo-row.upper { padding-bottom: 6px; border-bottom: 1.5px dashed var(--line-strong); }
+.odo-tooth { display: grid; justify-items: center; gap: 1px; padding: 2px 1px; border-radius: 6px; }
+.odo-tooth.mid { margin-left: 5px; padding-left: 5px; border-left: 1.5px dashed var(--line-strong); border-radius: 0; }
+.odo-tooth.sel { background: var(--accent-soft); }
+.odo-n { font-size: 9.5px; color: var(--muted); font-variant-numeric: tabular-nums; line-height: 1; }
+.odo-tooth svg { display: block; overflow: visible; }
+.odo-tooth polygon { stroke: var(--muted); stroke-width: 0.8; cursor: pointer; transition: opacity 0.12s; }
+.odo-tooth polygon:hover { opacity: 0.7; }
+.odo-tooth polygon.on { stroke: var(--accent); stroke-width: 2; }
+.odo-inc { fill: var(--panel-2); stroke: var(--muted); stroke-width: 0.8; cursor: pointer; }
+.chart-legend { display: flex; flex-wrap: wrap; gap: 4px 10px; justify-content: center; margin-top: 10px; font-size: 11.5px; color: var(--muted); }
+.chart-legend span { display: inline-flex; align-items: center; gap: 4px; }
+.chart-legend i { width: 11px; height: 11px; border-radius: 3px; border: 1px solid var(--line-strong); display: inline-block; }
+.chart-tooth-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+.chart-tooth-actions { display: flex; gap: 6px; margin: 8px 0; }
+.chart-surface { border: 1px solid var(--line); border-radius: 10px; padding: 8px; margin-top: 6px; cursor: pointer; }
+.chart-surface.on { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
+.chart-surface-name { font-size: 12.5px; margin-bottom: 6px; }
+.chart-surface-name b { display: inline-block; min-width: 16px; color: var(--accent); }
+.icdas-seg { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.icdas-seg button { height: 28px; border-radius: 7px; border: 1px solid var(--line-strong); background: var(--panel-solid); font-weight: 700; font-size: 13px; color: var(--ink-2); cursor: pointer; }
+.icdas-seg button:hover { border-color: var(--accent); }
+.chart-surface-more { display: grid; gap: 6px; margin-top: 8px; cursor: default; }
+.chart-crit { font-size: 11.5px; line-height: 1.5; }
+.chart-surface-row { display: flex; justify-content: space-between; align-items: center; gap: 6px; flex-wrap: wrap; }
+.chart-surface-more .input { height: 30px; font-size: 12.5px; }
+.chart-tooth-note { display: grid; gap: 3px; font-size: 11.5px; color: var(--muted); font-weight: 600; margin-top: 10px; }
+.chart-tooth-note .input { height: 30px; font-size: 12.5px; }
+.chart-hint { font-size: 12.5px; text-align: center; }
+.chart-sum { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; text-align: center; }
+.chart-sum div { display: grid; padding: 6px; border-radius: 9px; background: var(--panel-2); }
+.chart-sum b { font-size: 18px; }
+.chart-sum span { font-size: 11px; color: var(--muted); }
+.chart-bars { display: grid; gap: 3px; margin-top: 10px; }
+.chart-bar { display: grid; grid-template-columns: 14px 1fr 24px; align-items: center; gap: 6px; font-size: 11.5px; }
+.chart-bar i { height: 8px; border-radius: 4px; min-width: 2px; display: block; }
+.chart-bar em { font-style: normal; color: var(--muted); text-align: right; }
+.chart-list { list-style: none; padding: 0; margin: 10px 0 0; display: grid; gap: 2px; max-height: 180px; overflow: auto; }
+.chart-list .link { background: none; border: 0; padding: 2px 0; cursor: pointer; color: var(--ink-2); font-size: 12.5px; display: flex; align-items: center; gap: 6px; text-align: left; }
+.chart-list .link:hover { color: var(--accent); }
+.chart-list .code, .chart-crit .code { display: inline-block; min-width: 18px; text-align: center; border-radius: 4px; color: #fff; font-weight: 700; font-size: 11px; text-shadow: 0 0 2px #0006; }
+.chart-export { display: grid; gap: 6px; }
+.chart-export .btn { justify-content: flex-start; }
+.chart-ref { display: flex; gap: 6px; font-size: 11.5px; line-height: 1.5; color: var(--muted); }
+.chart-ref svg { flex: none; margin-top: 2px; }
+.chart-ref a { color: inherit; }
+.chart-body { overflow-x: hidden; }
+.chart-body > * { min-width: 0; }
+.odo-row { justify-content: center; }
+.odo-tooth { padding: 2px 0.5px; }
+.odo-tooth.mid { margin-left: 3px; padding-left: 3px; }
+.odo-n { font-size: 8.5px; }
+/* 6 个模式 + 英文时顶栏较挤：中等宽度下收紧 */
+@media (max-width: 1600px) {
+  .modes button { padding: 0 10px; gap: 5px; }
+  .search-trigger { width: 210px; }
+  .topbar { gap: 10px; }
+}
+@media (max-width: 1460px) {
+  .brand-sub { display: none; }
+  .search-trigger { width: 170px; }
+}

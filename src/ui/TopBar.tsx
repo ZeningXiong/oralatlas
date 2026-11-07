@@ -1,4 +1,4 @@
-import { Activity, BookOpen, Box, Camera, CircleHelp, GraduationCap, Languages, Library, Moon, Search, Settings2, Sun } from "lucide-react";
+import { Activity, BookOpen, ClipboardList, Box, Camera, CircleHelp, GraduationCap, Languages, Library, Moon, Search, Settings2, Sun } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useStore, setState, type Mode, type Quality } from "../state/store";
 import { useT } from "../i18n";
@@ -10,6 +10,7 @@ const MODES: { id: Mode; zh: string; en: string; icon: typeof Box }[] = [
   { id: "explore", zh: "探索", en: "Explore", icon: Box },
   { id: "learn", zh: "课程", en: "Lessons", icon: BookOpen },
   { id: "disease", zh: "病变", en: "Disease", icon: Activity },
+  { id: "chart", zh: "病历", en: "Chart", icon: ClipboardList },
   { id: "quiz", zh: "测验", en: "Quiz", icon: GraduationCap },
   { id: "glossary", zh: "术语", en: "Glossary", icon: Library },
 ];
